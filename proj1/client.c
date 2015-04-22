@@ -1,9 +1,6 @@
-//=========================
-// MC823 - Laboratorio de Redes de Computadores - Projeto 1
-//
-// Nome: Davi   RA: 097464
-// Nome: Fabio  RA: 073048
-//=========================
+// Projeto 1 - MC833
+// Matheus Pinheiro - RA 119920
+// Samuel Birocchi - RA 104052 
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,23 +41,25 @@ char ** split(char * string, char delim){
 
 }
 
-void printMenu(int isClientLibrary) {
+void printMenu(int isClientLocadora) {
   printf("\n\n******************************************************\n");
-  printf("Catálogo de livros! Entre com uma das opções abaixo e pressione ENTER\n\n");
-  printf("p - Imprimir esse menu\n");
+  printf("Escolha uma das opcoes e pressione ENTER\n\n");
+  printf("p - Imprimir menu\n");
   printf("0 - Sair\n");
-  printf("1 - Listar ISBN e título de todos os livros\n");
-  printf("2 - Exibir descrição de um livro\n");
-  printf("3 - Exibir todas informacoes de um livro\n");
-  printf("4 - Exibir todas informacoes de todos os livros\n");
-  printf("5 - Exibir a quantidade de um livro\n");
-  if (isClientLibrary) {
-    printf("6 - Alterar a quantidade de um livro\n");
+  printf("1 - Listar titulo e ano de lancamento de todos os filmes\n");
+  printf("2 - Listar titulo e ano de lancamento de todos os filmes de um genero\n");
+  printf("3 - Exibir sinopse de um filme\n");
+  printf("4 - Exibir a quantidade de um filme\n");
+  printf("5 - Exibir todas as informacoes de um filme\n");
+  printf("6 - Listar informacoes de todos os filmes\n");
+  if (isClientLocadora) {
+    printf("7 - Alterar a quantidade de um filme\n");
   }
   printf("******************************************************\n");
 }
 
-void listAllBooks(char response[]) { 
+// Titulo e ano
+void listMovies(char response[]) { 
   char ** temp;
   char ** all_books;
   char ** id_isbn_title;
@@ -83,12 +82,14 @@ void listAllBooks(char response[]) {
     }
     free(all_books);
     free(temp);
-
   }
-  
 }
 
-void listAllBooksInfo (char response[]) { 
+void showMovieSynopsis(char response[]){
+  printf("%s \n", response);
+}
+
+void listAllMovies (char response[]) { 
   char ** temp;
   char ** all_books;
   char ** all_info;
@@ -110,25 +111,15 @@ void listAllBooksInfo (char response[]) {
   free(temp);
 }
 
-void showBookDesc(char response[]){
-
-  printf("%s \n", response);
-
-}
-
-
 int main(int argc, char* argv[]) {
     // File descriptor do socket
     int sfd;  
     struct addrinfo hints, *result, *rp;
     int rv;
     char s[INET6_ADDRSTRLEN];
-    int isClientLibrary = 0;
-    
+    int isClientLocadora = 0;
     char response[MAXDATASIZE]; // Buffer de resposta
-
     int ativo;
-
     
     if (argc <= 2) {
         fprintf(stderr,"usage: client hostname usertype\n");
@@ -136,28 +127,21 @@ int main(int argc, char* argv[]) {
     }
 
     if (argc == 3) {
-      if ((strcmp(argv[2],"library") == 0)) {
-        isClientLibrary = 1;
+      if ((strcmp(argv[2],"locadora") == 0)) {
+        isClientLocadora = 1;
       }
     }
   
-    // hints define o tipo de endereço que estamos procurando no getaddrinfo
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
     hints.ai_socktype = SOCK_STREAM; /* Stream socket */
 
-    /* getaddrinfo() retorna uma lista de structs contendo endereços do tipo especificado em "hints". */
     if ((getaddrinfo(argv[1], PORT, &hints, &result)) != 0) {
         perror("Erro getaddrinfo\n");
         exit(0);
     }
   
-    // Percorre todos os endereços encontrados no getaddrinfo
-    // Faz o "bind" para o primeiro socket criado com sucesso
     for (rp = result; rp != NULL; rp = rp->ai_next) {
-
-        // socket() retorna um inteiro similar a um descritor de arquivos relacionado ao socket criado, 
-        // através do qual ele pode ser referenciado
         sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (sfd == -1){
             perror("client: socket");
@@ -174,26 +158,18 @@ int main(int argc, char* argv[]) {
     }
 
     if (rp == NULL) {
-        /* No address succeeded */              
         printf("Could not bind\n");
         exit(0);
     }
 
-    freeaddrinfo(result); // all done with this structure
-    
-    // char buf[100]; int numbytes;
-    // if ((numbytes=recv(sfd, buf, 100, 0)) == -1) {
-    //     perror("recv");
-    //     exit(1);
-    // }
-    // printf("%s \n", buf);
+    freeaddrinfo(result);
 
-    printMenu(isClientLibrary);
+    printMenu(isClientLocadora);
 
     int connected = 1;
     char option[1]; // Armazena opcao escolhida 
     char buffer[20]; // Buffer para envio de requisicao
-    char isbn[10];
+    char id[10];
     while (connected) {
         
         scanf("%s", &option);
@@ -208,39 +184,37 @@ int main(int argc, char* argv[]) {
             connected = 0;
             break;
 
-          //Listar ISBN e título de todos os livros
+          //Listar titulo e ano de todos os filmes
           case '1' :
-
             send(sfd, buffer, 12, 0);
 
             if (recv(sfd, response, MAXDATASIZE, 0) == -1) {
               perror("recv");
               exit(1);
             }
-            listAllBooks(response);
+            listMovies(response);
             break;
 
-          //Exibir descrição de um livro
+          //Listar titulo e ano dos filmes de um genero
           case '2' :
-            printf("Digite o isbn do LIVRO: ");
-            scanf("%s", isbn);
-            strcat(buffer,isbn);
+            printf("Digite o genero: ");
+            scanf("%s", id);
+            strcat(buffer,id);
 
             send(sfd, buffer, 12, 0);
 
             if (recv(sfd, response, MAXDATASIZE, 0) == -1) {
-               perror("recv");
-               exit(1);
+              perror("recv");
+              exit(1);
             }
-
-            showBookDesc(response);
+            listMovies(response);
             break;
 
-          //Exibir todas informacoes de um livro
+          //Exibir sinopse de um filme
           case '3' :
-            printf("Digite o isbn do LIVRO: ");
-            scanf("%s", isbn);
-            strcat(buffer,isbn);
+            printf("Digite o id do filme: ");
+            scanf("%s", id);
+            strcat(buffer,id);
 
             send(sfd, buffer, 12, 0);
 
@@ -249,64 +223,75 @@ int main(int argc, char* argv[]) {
                exit(1);
             }
 
-            showBookDesc(response);
+            showMovieSynopsis(response);
+            break;
 
-          break;
-
-          //Exibir todas informacoes de todos os livros
+          //Exibir a quantidade de um filme
           case '4' :
+            printf("Digite o id do filme: ");
+            scanf("%s", id);
+            strcat(buffer,id);
+
+            send(sfd, buffer, 12, 0);
+
+            if (recv(sfd, response, MAXDATASIZE, 0) == -1) {
+               perror("recv");
+               exit(1);
+            }
+
+            showMovieSynopsis(response);
+            break;
+
+          //Exibir todas informacoes de um filme
+          case '5' :
+            printf("Digite o id do filme: ");
+            scanf("%s", id);
+            strcat(buffer,id);
+
+            send(sfd, buffer, 12, 0);
+
+            if (recv(sfd, response, MAXDATASIZE, 0) == -1) {
+               perror("recv");
+               exit(1);
+            }
+
+            listAllMovies(response); // TALVEZ PRECISE ALTERAR
+            break;
+
+          //Exibir todas informacoes de todos os filmes
+          case '6' :
             send(sfd, buffer, 12, 0);
             if (recv(sfd, response, MAXDATASIZE, 0) == -1) {
               perror("recv");
               exit(1);
             }
-            listAllBooksInfo(response);
+            listAllMovies(response);
             break;
 
-          break;
-
-          //Exibir a quantidade de um livro
-          case '5' :
-            printf("Digite o isbn do LIVRO: ");
-            scanf("%s", isbn);
-            strcat(buffer,isbn);
-
-            send(sfd, buffer, 12, 0);
-
-            if (recv(sfd, response, MAXDATASIZE, 0) == -1) {
-               perror("recv");
-               exit(1);
-            }
-
-            showBookDesc(response);
-
-          break;
-
-          //Alterar a quantidade de um livro
-          case '6' :
-            printf("Digite o isbn do LIVRO: ");
-            scanf("%s", isbn);
+          //Alterar a quantidade de um filme
+          case '7' :
+            printf("Digite o id do filme: ");
+            scanf("%s", id);
 
             strcat(buffer,"|");
-            strcat(buffer,isbn);
+            strcat(buffer,id);
             strcat(buffer,"|");
 
             printf("Digite a nova quantidade: ");
-            scanf("%s", isbn);
+            scanf("%s", id);
 
-            strcat(buffer,isbn);
+            strcat(buffer,id);
             strcat(buffer,"|");
 
             char str[1];
-            sprintf(str, "%d", isClientLibrary);
+            sprintf(str, "%d", isClientLocadora);
             strcat(buffer,str);
 
             send(sfd, buffer, 20, 0);
-
-          break;
+            break;
 
           case 'p' :
-            printMenu(isClientLibrary);
+            printMenu(isClientLocadora);
             break;
 
           default:
@@ -314,76 +299,7 @@ int main(int argc, char* argv[]) {
             break;
           }
     }
-        close(sfd);
-
-        return 0;
-    }
-
-    /* 
-  int ativo = 0;
-  while(ativo) {
-
-    scanf("%c", &option);
-    buffer[0] = option;
-    buffer[1] = '\0';
-
-    switch ( option ) {
-    case '1' :
-      // Exibe id e titulo de todos os filmes
-      send(sfd, buffer, 6, 0);
-      recv(sfd, response, MAXDATASIZE, 0);
-      listAllMovies(response);
-      getchar();
-      break;
-      
-    case '2': 
-      // Exibe a sinopse do filme
-      printf("Digite o número do filme: ");
-      scanf("%s", aux);
-      strcat(buffer,aux);
-      send(sfd, buffer, 6, 0);
-      recv(sfd, response, MAXDATASIZE, 0);
-      printf("\n=======================================================\n");
-      printf("\n\nSINOPSE: %s\n", response);
-      printf("\n=======================================================\n");
-      getchar();
-      break;
-      
-    case '3': 
-      // Exibe todas as informacoes de um filme
-      printf("Digite o número do filme: ");
-      scanf("%s", aux);
-      strcat(buffer,aux);
-      send(sfd, buffer, 6, 0);
-      recv(sfd, response, MAXDATASIZE, 0);
-      findMovieById(response);
-      getchar();
-      break;
-      
-    case '4':
-      // Exibe todas as informacoes de todos os filmes
-      send(sfd, buffer, 6, 0);
-      recv(sfd, response, MAXDATASIZE, 0);
-      findAllMovies(response);
-      getchar();
-      break;
-      
-    case '5':
-      // Envia solicitacao de encerramento de conexao
-      send(sfd, buffer, 6, 0);
-      ativo = 0;
-      break;
-
-    default:
-      printf("Opção inválida. Digite novamente:");
-      getchar();
-      break;
-    }
     
-  }
-  
-  close(sfd);
-  
-  return 0;
+    close(sfd);
+    return 0;
 }
-*/
