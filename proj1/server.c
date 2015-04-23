@@ -101,9 +101,8 @@ void getAllMovieTitles(int new_fd) {
   int i;
 
   buffer[0] = END_STRING;
+  strcat(buffer, "10#");
   for(i=0; i < NUMBER_MOVIES; i++) {
-    strcat(buffer,filmes[i].id);
-    strcat(buffer, FIELD_SEP);
     strcat(buffer,filmes[i].titulo);
     strcat(buffer, FIELD_SEP);
     strcat(buffer,filmes[i].ano);
@@ -127,6 +126,7 @@ void getAllMovies(int new_fd) {
   int i;
 
   buffer[0] = END_STRING;
+  strcat(buffer, "10#");
   for(i = 0; i < NUMBER_MOVIES; i++) {
   	
     strcat(buffer,filmes[i].id);
@@ -168,6 +168,8 @@ void getMovieById(int new_fd, char opt[]) {
 
   buffer[0] = END_STRING;
 
+  strcat(buffer, "1#");
+
   strcat(buffer, filmes[index_movie].id);
   strcat(buffer, FIELD_SEP);
   strcat(buffer, filmes[index_movie].titulo);
@@ -179,6 +181,7 @@ void getMovieById(int new_fd, char opt[]) {
   strcat(buffer,filmes[index_movie].quantidade);
   strcat(buffer,FIELD_SEP);
   strcat(buffer,filmes[index_movie].ano);
+  strcat(buffer, REG_SEP);
   
   send(new_fd, buffer, MAX_SIZE_BUF_INFO_MOVIE, 0);
 }
@@ -205,18 +208,50 @@ void getMovieSynById(int new_fd, char opt[]) {
   send(new_fd, buffer, MAX_SIZE_BUF_SYNOPSIS, 0);
 }
 
-// void getMovieByGenre(int new_fd, char opt[]){
-//   char buffer[MAX_SIZE_BUF_SYNOPSIS];
+void getMovieQtById(int new_fd, char opt[]) {
+  char buffer[MAX_SIZE_BUF_SYNOPSIS];
+  char opt2[3];
+  
+  opt2[0] = opt[1];
+  opt2[1] = opt[2];
+  opt2[2] = END_STRING;
 
-//   opt2[0] = opt[1];
-//   opt2[1] = opt[2];
-//   opt2[2] = END_STRING;
+  buffer[0] = END_STRING;
+  strcat(buffer, filmes[atoi(opt2)-1].quantidade);
+  strcat(buffer, REG_SEP);
+  
+  send(new_fd, buffer, MAX_SIZE_BUF_SYNOPSIS, 0);
+}
 
-//   buffer[0] = END_STRING;
-//   strcat(buffer, filmes[atoi(opt2)-1].sinopse);
+void getMovieByGenre(int new_fd, char opt[]){
+  
+  char buffer[MAX_SIZE_BUF_ALL_MOVIES];
+  char *size;
+  int i, j = 0;
 
+  buffer[0] = END_STRING;
+  char *genre = split(opt, '|')[1];
 
-// }
+  for(i = 0; i < NUMBER_MOVIES; i++) {
+    int h = strcmp(genre, filmes[i].genero);
+    printf("%d", h);
+    if (strcmp(genre, filmes[i].genero) == 0)
+    {
+      strcat(buffer,filmes[i].titulo);
+      strcat(buffer,FIELD_SEP);
+      strcat(buffer,filmes[i].ano);
+
+      j++;
+
+      if(i != NUMBER_MOVIES - 1)
+        strcat(buffer,REG_SEP);
+    }
+  }
+  strcat(buffer, "#");
+  sprintf(size, "%d", j);
+  strcat(buffer, size);
+  send(new_fd, buffer, MAX_SIZE_BUF_ALL_MOVIES, 0);
+}
 
 
 /**
@@ -363,14 +398,13 @@ int main(int argc, char * argv[]) {
   	  break;
   	case '2': 
   	  //TODO Determinado genero
-      // getMovieByGenre(new_fd, opt);
+      getMovieByGenre(new_fd, opt);
   	  break;
   	case '3':
       getMovieSynById(new_fd, opt);
-  	  
   	  break;
   	case '4':
-  	  // TODO listar qtd de filme
+  	  getMovieQtById(new_fd, opt);
   	  break;
     case '5':
       getMovieById(new_fd, opt);

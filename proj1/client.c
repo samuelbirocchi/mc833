@@ -65,14 +65,38 @@ void listMovies(char response[]) {
   char ** id_isbn_title;
   int i = 0;
 
-  printf("%s\n", response);
-
   if (*response != '\0') { 
 
     temp = split(response, '#');
 
     int len = atoi(temp[0]); 
     all_books = split(temp[1], '\n');
+
+
+    for(i = 0; i < len; i++) {
+      id_isbn_title = split(all_books[i], '|');
+      
+      printf("%s | %s\n", id_isbn_title[0], id_isbn_title[1]);
+
+      free(id_isbn_title);
+    }
+    free(all_books);
+    free(temp);
+  }
+}
+
+void listMoviesGenre (char response[]) { 
+  char ** temp;
+  char ** all_books;
+  char ** id_isbn_title;
+  int i = 0;
+
+  if (*response != '\0') { 
+
+    temp = split(response, '#');
+
+    int len = atoi(temp[1]); 
+    all_books = split(temp[0], '\n');
 
 
     for(i = 0; i < len; i++) {
@@ -199,6 +223,7 @@ int main(int argc, char* argv[]) {
 
           //Listar titulo e ano dos filmes de um genero
           case '2' :
+            strcat(buffer, "|");
             printf("Digite o genero: ");
             scanf("%s", id);
             strcat(buffer,id);
@@ -209,7 +234,7 @@ int main(int argc, char* argv[]) {
               perror("recv");
               exit(1);
             }
-            listMovies(response);
+            listMoviesGenre(response);
             break;
 
           //Exibir sinopse de um filme
