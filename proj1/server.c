@@ -1,10 +1,3 @@
-//=========================
-// MC823 - Laboratorio de Redes de Computadores - Projeto 1
-//
-// Nome: Davi   RA: 097464
-// Nome: Fabio  RA: 073048
-//=========================
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -20,35 +13,16 @@
 
 #include "aux_functions.h"
 
-#define PORT "49152"  // porta de entrada dos clientes
-#define BACKLOG 10   // define o numero maximo de conexoes pendentes
+#define PORT "49152" 
+#define BACKLOG 10   
 
-#define NUMBER_MOVIES 13
-#define MAX_SIZE_BUF_TITLES 331
+#define NUMBER_MOVIES 10
+#define MAX_SIZE_BUF_TITLES 221
 
-/**
- *Tamanho do buffer maximo de envio de todas as infos de todos os
- * filmes: 3 caracteres -> [2(id) + '|' + 20(titulo) + '|' + 300(sinopse)
- * + '|' + 17(horarios) + '|' + 1(sala) + '|'] * 13 = 4485 caracteres
- * + '\0'= 4486
- */
-#define MAX_SIZE_BUF_ALL_MOVIES 4486
+#define MAX_SIZE_BUF_ALL_MOVIES 3540
 
-/**
- * Tamanho do buffer maximo de envio de todas as infos de um unico filme
- *  346 caracteres 
- *  -> 2(id) + '|' 
- *  + 20(titulo) + '|' 
- *  + 300(sinopse) + '|'
- *  + 17 (horarios) + '|' 
- *  + 1(sala) + '|' 
- *  = 345 caracteres + '\0' = 346
-*/
-#define MAX_SIZE_BUF_INFO_MOVIE 346
+#define MAX_SIZE_BUF_INFO_MOVIE 354
 
-/**
- * Tamanho maximo do buffer para envio de sinopse de um filme
- */
 #define MAX_SIZE_BUF_SYNOPSIS 301
 
 #define FIELD_SEP "|"
@@ -56,29 +30,19 @@
 #define END_STRING '\0'
 
 
-/**
- *   struct que contem os dados do filme: Id, Titulo, Sinopse, Horario
- *  de exibicao e Sala de exibicao 
- * Obs: todos os vetores tem um bytes a
- * mais, devido ao fato da funcao fgets() armazenar tambem um '\0' ao
- * final da string (os vetores com tamanho variavel possuem ainda um
- * byte a mais, para o caso de terem o maximo de caracteres, mais a
- * quebra de linha
-*/
 typedef struct movieStruct {
-  char id[3];		// ID - 2 caracteres
-  char titulo[22];	// Titulo - no maximo 20 caracteres
-  char sinopse[302];	// Sinopse - no maximo 300 caracteres
-  char horarios[18];	// Horario - XX:XX (5 caracteres) * 3 horarios = 15 caracteres
-  char sala[2];		// Sala de Exibicao - 1 caracter
+  char id[3];		
+  char titulo[22];	
+  char sinopse[302];	
+  char genero[18];	
+  char quantidade[3];	
+  char ano[6];
 } Movie;
 
 
-// vetor de structs 'filme', aonde serao armazenados os filmes
-// carregados a partir do arquivo
 Movie filmes[NUMBER_MOVIES];
 
-void loadBooksFromDB(){
+void loadMovies(){
   int i=0;
 
   // Array que armazenara cada linha do arquivo de livros, para tratar
@@ -108,8 +72,9 @@ void loadBooksFromDB(){
     strcpy(filmes[i].id, matrixConfig[0]);
     strcpy(filmes[i].titulo, matrixConfig[1]);
     strcpy(filmes[i].sinopse, matrixConfig[2]);
-    strcpy(filmes[i].sala, matrixConfig[3]);
-    strcpy(filmes[i].horarios, matrixConfig[4]);
+    strcpy(filmes[i].genero, matrixConfig[3]);
+    strcpy(filmes[i].quantidade, matrixConfig[4]);
+    strcpy(filmes[i].ano, matrixConfig[5]);
     i++;
 
     free(matrixConfig);
@@ -139,6 +104,8 @@ void getAllMovieTitles(int new_fd) {
     strcat(buffer, FIELD_SEP);
     strcat(buffer,filmes[i].titulo);
     strcat(buffer, REG_SEP);
+    strcat(buffer,filmes[i].ano);
+    strcat(buffer, REG_SEP);
   }
 
   send(new_fd, buffer, MAX_SIZE_BUF_TITLES, 0);
@@ -163,9 +130,11 @@ void getAllMovies(int new_fd) {
     strcat(buffer,FIELD_SEP);
     strcat(buffer,filmes[i].sinopse);
     strcat(buffer,FIELD_SEP);
-    strcat(buffer,filmes[i].sala);
+    strcat(buffer,filmes[i].genero);
     strcat(buffer,FIELD_SEP);
-    strcat(buffer,filmes[i].horarios);
+    strcat(buffer,filmes[i].quantidade);
+    strcat(buffer,FIELD_SEP);
+    strcat(buffer,filmes[i].ano);
 
     if(i != NUMBER_MOVIES - 1)
       strcat(buffer,REG_SEP);
@@ -200,9 +169,11 @@ void getMovieById(int new_fd, char opt[]) {
   strcat(buffer, FIELD_SEP);
   strcat(buffer, filmes[index_movie].sinopse);
   strcat(buffer, FIELD_SEP);
-  strcat(buffer, filmes[index_movie].sala);
-  strcat(buffer, FIELD_SEP);
-  strcat(buffer, filmes[index_movie].horarios);
+  strcat(buffer,filmes[index_movie].genero);
+  strcat(buffer,FIELD_SEP);
+  strcat(buffer,filmes[index_movie].quantidade);
+  strcat(buffer,FIELD_SEP);
+  strcat(buffer,filmes[index_movie].ano);
   
   send(new_fd, buffer, MAX_SIZE_BUF_INFO_MOVIE, 0);
 }
@@ -274,9 +245,9 @@ int main(int argc, char * argv[]) {
   
   // Vetor que contera a opcao do cliente (mais o id do filme, se for o
   // caso)
-  char opt[4];		                
+  char opt[15];		                
 
-  loadBooksFromDB();
+  loadMovies();
     
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_UNSPEC;
@@ -360,37 +331,37 @@ int main(int argc, char * argv[]) {
       while(ativo){
 
       	// Recebe a opcao do client
-      	if(recv(new_fd,opt, 4, 0) == -1); 
+      	if(recv(new_fd,opt, 15, 0) == -1)
 
 	      perror("recv");
 
 	       switch(opt[0]){
-  	case '1':			 
-  	  // Listar todos os Ids dos filmes com seus respectivos
-  	  // titulos
+  	case '0':
+      // Finaliza conexao
+      ativo = 0;
+      break;
+    case '1':			 
   	  getAllMovieTitles(new_fd);
   	  break;
-   				
   	case '2': 
-  	  // Dado o Id de um filme, retornar a sinopse
-  	  getMovieSynById(new_fd, opt);  
+  	  //TODO Determinado genero
   	  break;
-
-  	case '3':			  
-  	  // Dado o Id de um filme, retornar todas as informações
-  	  // desse filme
-  	  getMovieById(new_fd, opt);
+  	case '3':
+      getMovieSynById(new_fd, opt);
+  	  
   	  break;
-
   	case '4':
-  	  // Listar todas as informações de todos os filmes;			  
-  	   getAllMovies(new_fd);
+  	  // TODO listar qtd de filme
   	  break;
-
-  	case '5':
-  	  // Finaliza conexao
-  	  ativo = 0;
-  	  break;
+    case '5':
+      getMovieById(new_fd, opt);
+      break;
+    case '6':
+      getAllMovies(new_fd);
+      break;
+    case '7':
+      // TODO alterar qtd
+      break;
   	default:
   	  printf("Opcao nao valida. Tente novamente\n");
   	  break;
