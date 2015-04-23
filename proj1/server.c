@@ -67,7 +67,9 @@ void loadMovies(){
   // adequadamente
   while(lineRead != NULL) {
     
+
     matrixConfig = split(lineRead, '|');
+
 
     strcpy(filmes[i].id, matrixConfig[0]);
     strcpy(filmes[i].titulo, matrixConfig[1]);
@@ -103,9 +105,10 @@ void getAllMovieTitles(int new_fd) {
     strcat(buffer,filmes[i].id);
     strcat(buffer, FIELD_SEP);
     strcat(buffer,filmes[i].titulo);
-    strcat(buffer, REG_SEP);
+    strcat(buffer, FIELD_SEP);
     strcat(buffer,filmes[i].ano);
-    strcat(buffer, REG_SEP);
+    if(i != NUMBER_MOVIES - 1)
+      strcat(buffer,REG_SEP);
   }
 
   send(new_fd, buffer, MAX_SIZE_BUF_TITLES, 0);
@@ -118,6 +121,8 @@ void getAllMovieTitles(int new_fd) {
  * @param new_fd socket da conexao que recebeu a requisicao
 */
 void getAllMovies(int new_fd) {
+  printf("Função getAllMovies\n");
+
   char buffer[MAX_SIZE_BUF_ALL_MOVIES];
   int i;
 
@@ -199,6 +204,19 @@ void getMovieSynById(int new_fd, char opt[]) {
   
   send(new_fd, buffer, MAX_SIZE_BUF_SYNOPSIS, 0);
 }
+
+// void getMovieByGenre(int new_fd, char opt[]){
+//   char buffer[MAX_SIZE_BUF_SYNOPSIS];
+
+//   opt2[0] = opt[1];
+//   opt2[1] = opt[2];
+//   opt2[2] = END_STRING;
+
+//   buffer[0] = END_STRING;
+//   strcat(buffer, filmes[atoi(opt2)-1].sinopse);
+
+
+// }
 
 
 /**
@@ -331,7 +349,7 @@ int main(int argc, char * argv[]) {
       while(ativo){
 
       	// Recebe a opcao do client
-      	if(recv(new_fd,opt, 15, 0) == -1)
+      	if(recv(new_fd,opt, 15, 0) == -1);
 
 	      perror("recv");
 
@@ -345,6 +363,7 @@ int main(int argc, char * argv[]) {
   	  break;
   	case '2': 
   	  //TODO Determinado genero
+      // getMovieByGenre(new_fd, opt);
   	  break;
   	case '3':
       getMovieSynById(new_fd, opt);

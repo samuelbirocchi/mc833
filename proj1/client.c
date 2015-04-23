@@ -65,6 +65,8 @@ void listMovies(char response[]) {
   char ** id_isbn_title;
   int i = 0;
 
+  printf("%s\n", response);
+
   if (*response != '\0') { 
 
     temp = split(response, '#');
