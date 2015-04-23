@@ -223,18 +223,20 @@ void getMovieQtById(int new_fd, char opt[]) {
   send(new_fd, buffer, MAX_SIZE_BUF_SYNOPSIS, 0);
 }
 
+void alterQt(int new_fd, char opt[]){
+  printf("%s\n", opt);
+}
+
 void getMovieByGenre(int new_fd, char opt[]){
   
-  char buffer[MAX_SIZE_BUF_ALL_MOVIES];
+  char buffer[MAX_SIZE_BUF_ALL_MOVIES], genre[18];
   char *size;
   int i, j = 0;
 
   buffer[0] = END_STRING;
-  char *genre = split(opt, '|')[1];
+  strcpy(genre, split(opt, '|')[1]);
 
   for(i = 0; i < NUMBER_MOVIES; i++) {
-    int h = strcmp(genre, filmes[i].genero);
-    printf("%d", h);
     if (strcmp(genre, filmes[i].genero) == 0)
     {
       strcat(buffer,filmes[i].titulo);
@@ -298,7 +300,7 @@ int main(int argc, char * argv[]) {
   
   // Vetor que contera a opcao do cliente (mais o id do filme, se for o
   // caso)
-  char opt[15];		                
+  char opt[20];		                
 
   loadMovies();
     
@@ -384,7 +386,7 @@ int main(int argc, char * argv[]) {
       while(ativo){
 
       	// Recebe a opcao do client
-      	if(recv(new_fd,opt, 15, 0) == -1);
+      	if(recv(new_fd,opt, 20, 0) == -1);
 
 	      perror("recv");
 
@@ -413,7 +415,7 @@ int main(int argc, char * argv[]) {
       getAllMovies(new_fd);
       break;
     case '7':
-      // TODO alterar qtd
+      alterQt(new_fd, opt);
       break;
   	default:
   	  printf("Opcao nao valida. Tente novamente\n");
