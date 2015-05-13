@@ -2,6 +2,8 @@
 // Matheus Pinheiro - RA 119920
 // Samuel Birocchi - RA 104052 
 
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,10 +15,10 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-// Porta efêmera que o cliente usará para se conectar
+
 #define PORT "49152" 
 
-// Numero maximo de bytes que cada resposta pode conter
+
 #define MAXDATASIZE 5000
 
 #define REG_SEP '\n'
@@ -42,7 +44,7 @@ char ** split(char * string, char delim){
 }
 
 void printMenu(int isClientLocadora) {
-  printf("\n\n******************************************************\n");
+  printf("\n\n==========================================================\n");
   printf("Escolha uma das opcoes e pressione ENTER\n\n");
   printf("p - Imprimir menu\n");
   printf("0 - Sair\n");
@@ -55,10 +57,10 @@ void printMenu(int isClientLocadora) {
   if (isClientLocadora) {
     printf("7 - Alterar a quantidade de um filme\n");
   }
-  printf("******************************************************\n");
+  printf("==========================================================\n");
 }
 
-// Titulo e ano
+
 void listMovies(char response[]) { 
   char ** temp;
   char ** all_books;
@@ -91,7 +93,7 @@ void listMoviesGenre (char response[]) {
   char ** id_isbn_title;
   int i = 0;
 
-  if (*response != '\0') { 
+  printf("%s\n", response);
 
     temp = split(response, '#');
 
@@ -108,7 +110,6 @@ void listMoviesGenre (char response[]) {
     }
     free(all_books);
     free(temp);
-  }
 }
 
 void showMovieSynopsis(char response[]){
@@ -138,13 +139,13 @@ void listAllMovies (char response[]) {
 }
 
 int main(int argc, char* argv[]) {
-    // File descriptor do socket
+    
     int sfd;  
     struct addrinfo hints, *result, *rp;
     int rv;
     char s[INET6_ADDRSTRLEN];
     int isClientLocadora = 0;
-    char response[MAXDATASIZE]; // Buffer de resposta
+    char response[MAXDATASIZE]; 
     int ativo;
     
     if (argc <= 2) {
@@ -159,8 +160,8 @@ int main(int argc, char* argv[]) {
     }
   
     memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_STREAM; /* Stream socket */
+    hints.ai_family = AF_UNSPEC;    
+    hints.ai_socktype = SOCK_STREAM;
 
     if ((getaddrinfo(argv[1], PORT, &hints, &result)) != 0) {
         perror("Erro getaddrinfo\n");
@@ -193,8 +194,8 @@ int main(int argc, char* argv[]) {
     printMenu(isClientLocadora);
 
     int connected = 1;
-    char option[1]; // Armazena opcao escolhida 
-    char buffer[20]; // Buffer para envio de requisicao
+    char option[1]; 
+    char buffer[20]; 
     char id[10];
     while (connected) {
         
@@ -204,13 +205,13 @@ int main(int argc, char* argv[]) {
 
         switch ( buffer[0] ) {
 
-          // Sair
+          
           case '0' :
             send(sfd, buffer, MAXDATASIZE, 0);
             connected = 0;
             break;
 
-          //Listar titulo e ano de todos os filmes
+          
           case '1' :
             send(sfd, buffer, 12, 0);
 
@@ -221,7 +222,7 @@ int main(int argc, char* argv[]) {
             listMovies(response);
             break;
 
-          //Listar titulo e ano dos filmes de um genero
+          
           case '2' :
             strcat(buffer, "|");
             printf("Digite o genero: ");
@@ -237,7 +238,7 @@ int main(int argc, char* argv[]) {
             listMoviesGenre(response);
             break;
 
-          //Exibir sinopse de um filme
+          
           case '3' :
             printf("Digite o id do filme: ");
             scanf("%s", id);
@@ -253,7 +254,7 @@ int main(int argc, char* argv[]) {
             showMovieSynopsis(response);
             break;
 
-          //Exibir a quantidade de um filme
+          
           case '4' :
             printf("Digite o id do filme: ");
             scanf("%s", id);
@@ -269,7 +270,7 @@ int main(int argc, char* argv[]) {
             showMovieSynopsis(response);
             break;
 
-          //Exibir todas informacoes de um filme
+          
           case '5' :
             printf("Digite o id do filme: ");
             scanf("%s", id);
@@ -282,10 +283,10 @@ int main(int argc, char* argv[]) {
                exit(1);
             }
 
-            listAllMovies(response); // TALVEZ PRECISE ALTERAR
+            listAllMovies(response); 
             break;
 
-          //Exibir todas informacoes de todos os filmes
+          
           case '6' :
             send(sfd, buffer, 12, 0);
             if (recv(sfd, response, MAXDATASIZE, 0) == -1) {
@@ -295,7 +296,7 @@ int main(int argc, char* argv[]) {
             listAllMovies(response);
             break;
 
-          //Alterar a quantidade de um filme
+          
           case '7' :
             printf("Digite o id do filme: ");
             scanf("%s", id);

@@ -1,3 +1,7 @@
+// Projeto 1 - MC833
+// Matheus Pinheiro - RA 119920
+// Samuel Birocchi - RA 104052 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -45,26 +49,26 @@ Movie filmes[NUMBER_MOVIES];
 void loadMovies(){
   int i=0;
 
-  // Array que armazenara cada linha do arquivo de livros, para tratar
-  // cada campos posteriormente
+  
+  
   char * lineRead;
 
-  // Matriz onde cada posicao equivale a um campo de um registro do
-  // arquivo de livros
+  
+  
   char ** matrixConfig;
 
-  // Carrega todos os filmes contidos no arquivo 'movies.txt' para a
-  // memoria (total de 13 filmes)
+  
+  
   FILE *arqFilmes = NULL;
 
   arqFilmes = fopen("movies.txt","r");
   
-  // Le a primeira linha do arquivo de filmes
+  
   lineRead = readFileBySeparator(arqFilmes, '\n');
  
-  // Para cada linha do arquivo (que corresponde a um filme) separa os
-  // campos e usa cada um deles para preencher a estrutura de filmes
-  // adequadamente
+  
+  
+  
   while(lineRead != NULL) {
     
 
@@ -91,11 +95,6 @@ void loadMovies(){
 }
 
 
-/**
- *  Retorna ao cliente todos os Ids dos filmes com seus respectivos
- *  titulos
- * @param new_fd id do socket que recebeu a requisicao
-*/
 void getAllMovieTitles(int new_fd) {
   char buffer[MAX_SIZE_BUF_TITLES];
   int i;
@@ -114,11 +113,6 @@ void getAllMovieTitles(int new_fd) {
 }
 
 
-/**
- * Envia ao cliente todas as informacoes de todos os filmes.  
- *
- * @param new_fd socket da conexao que recebeu a requisicao
-*/
 void getAllMovies(int new_fd) {
   printf("Função getAllMovies\n");
 
@@ -148,13 +142,6 @@ void getAllMovies(int new_fd) {
   send(new_fd, buffer, MAX_SIZE_BUF_ALL_MOVIES, 0);
 }
 
-/**
- *  Retorna todas as informacoes de um filme especificado pelo Id que o
- *  cliente enviou
- *
- * @param new_fd socket da conexao que fez a requisicao
- * @param opt array que contem o id do filme do qual se quer as infos
-*/
 void getMovieById(int new_fd, char opt[]) {
   char buffer[MAX_SIZE_BUF_INFO_MOVIE];
   char opt2[3];
@@ -186,13 +173,6 @@ void getMovieById(int new_fd, char opt[]) {
   send(new_fd, buffer, MAX_SIZE_BUF_INFO_MOVIE, 0);
 }
 
-/**
- * Retorna a sinopse do filme especificado pelo Id que o cliente enviou
- *
- * @param new_fd socket que realizou a requisicao
- * @param opt array que contem o id do filme do qual a sinopse deve 
- *            ser enviada
- */
 void getMovieSynById(int new_fd, char opt[]) {
   char buffer[MAX_SIZE_BUF_SYNOPSIS];
   char opt2[3];
@@ -224,20 +204,32 @@ void getMovieQtById(int new_fd, char opt[]) {
 }
 
 void alterQt(int new_fd, char opt[]){
-  printf("%s\n", opt);
+  char *args;
+  char buffer[1];
+
+  buffer[0] = '0';
+  args = split(opt, '|');
+  if(atoi(args[3])){
+    strcpy(filmes[atoi(args[1])-1].quantidade, args[2]);
+    buffer[0] = '1';
+  }
+
+  send(new_fd, buffer, 1, 0);
 }
 
 void getMovieByGenre(int new_fd, char opt[]){
   
   char buffer[MAX_SIZE_BUF_ALL_MOVIES], genre[18];
   char *size;
-  int i, j = 0;
+  int i, j = 0, cmp;
 
   buffer[0] = END_STRING;
   strcpy(genre, split(opt, '|')[1]);
 
   for(i = 0; i < NUMBER_MOVIES; i++) {
-    if (strcmp(genre, filmes[i].genero) == 0)
+    cmp = strcmp(genre, filmes[i].genero);
+    printf("%d\n", cmp);
+    if (cmp == 0)
     {
       strcat(buffer,filmes[i].titulo);
       strcat(buffer,FIELD_SEP);
@@ -252,24 +244,14 @@ void getMovieByGenre(int new_fd, char opt[]){
   strcat(buffer, "#");
   sprintf(size, "%d", j);
   strcat(buffer, size);
+  printf("%s\n", buffer);
   send(new_fd, buffer, MAX_SIZE_BUF_ALL_MOVIES, 0);
 }
 
-
-/**
- * Pega todos os processos 'mortos'
- * 
- * @param s 
- */
 void sigchld_handler(int s) {
     while(waitpid(-1, NULL, WNOHANG) > 0);
 }
 
-/**
- * Define se o sockaddr é IPv4 ou IPv6
- *
- * @param sa socket
- */
 void *get_in_addr(struct sockaddr *sa) {
 
     if (sa->sa_family == AF_INET) {
@@ -279,16 +261,13 @@ void *get_in_addr(struct sockaddr *sa) {
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-/**
- * Principal
- */
 int main(int argc, char * argv[]) {
   
-  //sockfd refere-se à escuta, new_fd a novas conexoes
+  
   int sockfd, new_fd;  			
   struct addrinfo hints, *servinfo, *p;
 
-  //informacao de endereco dos conectores
+  
   struct sockaddr_storage their_addr; 	
 
   socklen_t sin_size;
@@ -296,17 +275,17 @@ int main(int argc, char * argv[]) {
   int yes=1;
   char s[INET6_ADDRSTRLEN];
   int rv;
-  int ativo; // Booleano que indica se a conexao deve continuar ativa
+  int ativo; 
   
-  // Vetor que contera a opcao do cliente (mais o id do filme, se for o
-  // caso)
+  
+  
   char opt[20];		                
 
   loadMovies();
     
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM; // Stream socket
+  hints.ai_socktype = SOCK_STREAM; 
   hints.ai_flags = AI_PASSIVE;
   
   if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
@@ -314,11 +293,11 @@ int main(int argc, char * argv[]) {
     return 1;
   }
   
-  // Percorre a lista ligada e realiza 'bind' ao primeiro que for possivel
-  // Cria todos os file descriptors dos sockets, dando nome a eles
+  
+  
   for(p = servinfo; p != NULL; p = p->ai_next) {
 
-    //Função SOCKET: cria um socket, dando acesso ao serviço da camada de transporte
+    
     if ((sockfd = socket(p->ai_family, p->ai_socktype,p->ai_protocol)) == -1) {
       perror("server: socket");
       continue;
@@ -329,7 +308,7 @@ int main(int argc, char * argv[]) {
       exit(1);
     }
     
-    //Função bind: atribui um nome ao socket
+    
     if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
       close(sockfd);
       perror("server: bind");
@@ -339,16 +318,16 @@ int main(int argc, char * argv[]) {
     break;
   }
   
-  // Debug de erro
+  
   if (p == NULL)  {
     fprintf(stderr, "servidor: falha ao realizar 'bind'\n");
     return 2;
   }
   
-  // Necessario devido à chamada 'getaddrinfo' acima
+  
   freeaddrinfo(servinfo); 
   
-  // Anuncia que está apto para receber conexões
+  
   if (listen(sockfd, BACKLOG) == -1) {
     perror("listen");
     exit(1);
@@ -364,42 +343,42 @@ int main(int argc, char * argv[]) {
   
   printf("servidor: aguardando conexoes...\n");
   
-  // Loop de aceitacao principal
+  
   while(1) {
     sin_size = sizeof their_addr;
     new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
     if (new_fd == -1) {
-      // perror("accept");
+      
       continue;
     }
     
     inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
     printf("servidor: conexao obtida de %s\n", s);
     
-    // Processo filho
+    
     if (!fork()) { 			  
 
-      // Processo filho nao precisa da escuta
+      
       close(sockfd); 			  
 
       ativo = 1;
       while(ativo){
 
-      	// Recebe a opcao do client
+      	
       	if(recv(new_fd,opt, 20, 0) == -1);
 
 	      perror("recv");
 
 	       switch(opt[0]){
   	case '0':
-      // Finaliza conexao
+      
       ativo = 0;
       break;
     case '1':			 
   	  getAllMovieTitles(new_fd);
   	  break;
   	case '2': 
-  	  //TODO Determinado genero
+  	  
       getMovieByGenre(new_fd, opt);
   	  break;
   	case '3':
@@ -426,7 +405,7 @@ int main(int argc, char * argv[]) {
       exit(0);
     }
 
-    // processo pai nao precisa da nova conexao
+    
     close(new_fd); 
   }
   
